@@ -1,2 +1,2 @@
 # DotSim
-A Noita-like particle sim
+A Noita-like particle sim written in C#.
