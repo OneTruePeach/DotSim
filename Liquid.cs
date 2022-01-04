@@ -15,21 +15,20 @@ namespace DotSim
         public int yUnchangedCount = 0;
         public int yUnchangedThreshold = 200;
 
-        public Liquid(int x, int y) : base(x, y) {
-            stoppedMovingThreshold = 10;
-        }
+        public Liquid(int x, int y) : base(x, y) { stoppedMovingThreshold = 10; }
 
         override public void step(WorldMatrix matrix) {
             if (stepped.Get(0) == true) return;
             stepped.Not();
             if (matrix.useChunks && !matrix.shouldStepElementInChunk(this)) return;
 
-            //vel = Vector3.Add(vel, new Vector3(0f, -0.5f, 0f));
+            vel = Vector3.Add(vel, new Vector3(0f, -0.5f, 0f));
+            if (isFreeFalling) vel.X *= 0.8f;
 
             int yModifier = vel.Y < 0 ? -1 : 1;
             int xModifier = vel.X < 0 ? -1 : 1;
-            float velYDeltaTimeFloat = (Math.Abs(vel.Y) * 1 / 60);
-            float velXDeltaTimeFloat = (Math.Abs(vel.X) * 1 / 60);
+            float velYDeltaTimeFloat = (Math.Abs(vel.Y) * 1/60);
+            float velXDeltaTimeFloat = (Math.Abs(vel.X) * 1/60);
             int velXDeltaTime;
             int velYDeltaTime;
             if (velXDeltaTimeFloat < 1) {
@@ -55,9 +54,9 @@ namespace DotSim
 
             bool xDiffIsLarger = Math.Abs(velXDeltaTime) > Math.Abs(velYDeltaTime);
             int upperBound = Math.Max(Math.Abs(velXDeltaTime), Math.Abs(velYDeltaTime));
-            int lowerBound = Math.Max(Math.Abs(velXDeltaTime), Math.Abs(velYDeltaTime));
+            int lowerBound = Math.Min(Math.Abs(velXDeltaTime), Math.Abs(velYDeltaTime));
 
-            float slope = (lowerBound == 0 || upperBound == 0) ? 0 : ((float)(lowerBound + 1) / (upperBound + 1));
+            float slope = (lowerBound == 0 || upperBound == 0) ? 0f : ((float)((lowerBound + 1) / (upperBound + 1)));
 
             int smallerCount;
 
@@ -90,51 +89,49 @@ namespace DotSim
                 }
             }
 
+            stoppedMovingCount = didNotMove(formerLocation) ? stoppedMovingCount + 1 : 0;
+            if (stoppedMovingCount > stoppedMovingThreshold) { stoppedMovingCount = stoppedMovingThreshold; }
+            if (matrix.useChunks) {
+                if (!hasNotMovedBeyondThreshold()) {
+                    matrix.reportToChunkActive(this);
+                    matrix.reportToChunkActive((int)formerLocation.X, (int)formerLocation.Y);
+                }
+            }
+
         }
 
         override protected bool actOnNeighboringElement(Element neighbor, int modifiedMatrixX, int modifiedMatrixY, WorldMatrix matrix, bool isFinal, bool isFirst, Vector3 lastValidLocation, int depth) {
             bool acted = actOnOther(neighbor, matrix);
             if (acted) return false;
-            if (neighbor is EmptyCell)
-            { //also if its a particle (not implemented)
-                if (isFinal)
-                {
+            if (neighbor is EmptyCell) { //also if its a particle (not implemented)
+                if (isFinal) {
                     isFreeFalling = true;
                     swapPositions(matrix, neighbor, modifiedMatrixX, modifiedMatrixY);
-                }
-                else
-                {
+                } else {
                     return false;
                 }
             }
-            else if (neighbor is Liquid)
-            {
+            else if (neighbor is Liquid) {
                 Liquid liquidNeighbor = (Liquid)neighbor;
-                if (compareDensities(liquidNeighbor))
-                {
-                    if (isFinal)
-                    {
+                if (compareDensities(liquidNeighbor)) {
+                    if (isFinal) {
                         swapLiquidByDensity(matrix, liquidNeighbor, modifiedMatrixX, modifiedMatrixY, lastValidLocation);
                         return true;
-                    }
-                    else
-                    {
+                    } else {
                         lastValidLocation.X = modifiedMatrixX;
                         lastValidLocation.Y = modifiedMatrixY;
-                        return false; //at dinner, brb
+                        return false;
                     }
                 }
 
                 if (depth > 0) return true;
 
-                if (isFinal)
-                {
+                if (isFinal) {
                     moveToLastValid(matrix, lastValidLocation);
                     return true;
                 }
 
-                if (isFreeFalling)
-                {
+                if (isFreeFalling) {
                     float absY = Math.Max(Math.Abs(vel.Y) / 31, 105);
                     vel.X = vel.X < 0 ? -absY : absY; //but why not tho
                 }
@@ -148,22 +145,17 @@ namespace DotSim
                 int distance = additionalX * (rng.Next() > 0.5 ? dispersionRate + 2 : dispersionRate - 1);
 
                 Element diagonalNeighbor = matrix.get(matrixX + additionalX, matrixY + additionalY);
-                if (isFirst)
-                {
+                if (isFirst) {
                     vel.Y = averageVel(vel.Y, neighbor.vel.Y);
-                }
-                else
-                {
+                } else {
                     vel.Y = -124;
                 }
 
                 neighbor.vel.Y = vel.Y;
                 vel.X *= frictionFactor;
-                if (diagonalNeighbor != null)
-                {
+                if (diagonalNeighbor != null) {
                     bool stoppedDiagonally = iterateToAdditional(matrix, matrixX + additionalX, matrixY + additionalY, distance, lastValidLocation);
-                    if (!stoppedDiagonally)
-                    {
+                    if (!stoppedDiagonally) {
                         isFreeFalling = true;
                         return true;
                     }
@@ -173,9 +165,57 @@ namespace DotSim
 
                 moveToLastValid(matrix, lastValidLocation);
                 return true;
+            } else if (neighbor is Solid) {
+                if (depth > 0) return true;
+                if (isFinal) {
+                    moveToLastValid(matrix, lastValidLocation);
+                    return true;
+                }
+
+                if (isFreeFalling) {
+                    float absY = Math.Max(Math.Abs(vel.Y) / 31, 105);
+                    vel.X = vel.X < 0 ? -absY : absY;
+                }
+
+                Vector3 normalizedVel = vel;
+                normalizedVel.Normalize();
+
+                int additionalX = getAdditional(normalizedVel.X);
+                int additionalY = getAdditional(normalizedVel.Y);
+
+                int distance = additionalX * (rng.Next() > 0.5 ? dispersionRate + 2 : dispersionRate - 1);
+
+                Element diagonalNeighbor = matrix.get(matrixX + additionalX, matrixY + additionalY);
+                if (isFirst) {
+                    vel.Y = averageVel(vel.Y, neighbor.vel.Y);
+                } else { vel.Y = -124; }
+
+                neighbor.vel.Y = vel.Y;
+                vel.X *= frictionFactor;
+                if (diagonalNeighbor != null) {
+                    bool stoppedDiagonally = iterateToAdditional(matrix, matrixX + additionalX, matrixY + additionalY, distance, lastValidLocation);
+                    if (!stoppedDiagonally) {
+                        isFreeFalling = true;
+                        return true;
+                    }
+                }
+
+                Element adjacentNeighbor = matrix.get(matrixX + additionalX, matrixY);
+                if (adjacentNeighbor != null) {
+                    bool stoppedAdjacently = iterateToAdditional(matrix, matrixX + additionalX, matrixY, distance, lastValidLocation);
+                    if (stoppedAdjacently) vel.X *= -1;
+                    if (!stoppedAdjacently) {
+                        isFreeFalling = false;
+                        return true;
+                    }
+                }
+
+                isFreeFalling = false;
+
+                moveToLastValid(matrix, lastValidLocation);
+                return true;
             }
-            else if (neighbor is Solid) { }
-            return true;
+            return false;
         }
 
         private bool iterateToAdditional(WorldMatrix matrix, int startingX, int startingY, int distance, Vector3 lastValid) {
@@ -193,10 +233,8 @@ namespace DotSim
                 bool isFirst = i == 0;
                 bool isFinal = i == Math.Abs(distance);
 
-                if (neighbor is EmptyCell)
-                { //or particle (todo)
-                    if (isFinal)
-                    {
+                if (neighbor is EmptyCell) { //or particle (todo)
+                    if (isFinal) {
                         swapPositions(matrix, neighbor, modifiedX, startingY);
                         return false;
                     }

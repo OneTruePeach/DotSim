@@ -16,7 +16,8 @@ namespace DotSim
         public int matrixY;
         public float xThreshold = 0;
         public float yThreshold = 0;
-        public Vector3 vel { get; set; }
+        public Vector3 vel = new Vector3();
+        public int stoppedMovingCount = 0;
         public int stoppedMovingThreshold = 1;
         public bool isFreeFalling = true;
         public bool isDead = false;
@@ -94,5 +95,8 @@ namespace DotSim
         //        }
         //    }
         //}
+
+        public bool didNotMove(Vector3 formerLocation) { return formerLocation.X == matrixX && formerLocation.Y == matrixY; }
+        public bool hasNotMovedBeyondThreshold() { return stoppedMovingCount >= stoppedMovingThreshold; }
     }
 }
