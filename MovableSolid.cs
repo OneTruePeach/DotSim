@@ -101,7 +101,123 @@ namespace DotSim
             }
         }
 
-        private void stepAsPartOfPhysicsBody() { return; }
+        override protected bool actOnNeighboringElement(Element neighbor, int modifiedMatrixX, int modifiedMatrixY, WorldMatrix matrix, bool isFinal, bool isFirst, Vector3 lastValidLocation, int depth) {
+            if (neighbor is EmptyCell) { //or particle
+                setAdjacentNeighborsFreeFalling(matrix, depth, lastValidLocation);
+                if (isFinal) {
+                    isFreeFalling = true;
+                    swapPositions(matrix, neighbor, modifiedMatrixX, modifiedMatrixY);
+                } else {
+                    return false;
+                }
+            } else if (neighbor is Liquid) {
+                if (depth > 0) {
+                    isFreeFalling = true;
+                    setAdjacentNeighborsFreeFalling(matrix, depth, lastValidLocation);
+                    swapPositions(matrix, neighbor, modifiedMatrixX, modifiedMatrixY);
+                } else {
+                    isFreeFalling = true;
+                    moveToLastValidAndSwap(matrix, neighbor, modifiedMatrixX, modifiedMatrixY, lastValidLocation);
+                    return true;
+                }
+            } else if (neighbor is Solid) {
+                if (depth > 0) return true;
+                if (isFinal) {
+                    moveToLastValid(matrix, lastValidLocation);
+                    return true;
+                }
+                if (isFreeFalling) {
+                    float absY = Math.Max(Math.Abs(vel.Y) / 31, 105);
+                    vel.X = vel.X < 0 ? -absY : absY;
+                }
+                Vector3 normalizedVel = vel;
+                normalizedVel.Normalize();
 
+                int additionalX = getAdditional(normalizedVel.X);
+                int additionalY = getAdditional(normalizedVel.Y);
+
+                Element diagonalNeighbor = matrix.get(matrixX + additionalX, matrixY + additionalY);
+                if (isFirst) {
+                    vel.Y = averageVel(vel.Y, neighbor.vel.Y);
+                } else { vel.Y = -124; }
+
+                neighbor.vel.Y = vel.Y;
+                vel.X *= frictionFactor * neighbor.frictionFactor;
+                if (diagonalNeighbor != null) {
+                    bool stoppedDiagonally = actOnNeighboringElement(diagonalNeighbor, matrixX + additionalX, matrixY + additionalY, matrix, true, false, lastValidLocation, depth + 1);
+                    if (!stoppedDiagonally) {
+                        isFreeFalling = true;
+                        return true;
+                    }
+                }
+
+                Element adjacentNeighbor = matrix.get(matrixX + additionalX, matrixY);
+                if (adjacentNeighbor != null && adjacentNeighbor != diagonalNeighbor) {
+                    bool stoppedAdjacently = actOnNeighboringElement(adjacentNeighbor, matrixX + additionalX, matrixY, matrix, true, false, lastValidLocation, depth + 1);
+                    if (stoppedAdjacently) vel.X *= -1;
+                    if (!stoppedAdjacently) {
+                        isFreeFalling = false;
+                        return true;
+                    }
+                }
+
+                isFreeFalling = false;
+
+                moveToLastValid(matrix, lastValidLocation);
+                return true;
+            }
+            return false;
+        }
+
+        private void stepAsPartOfPhysicsBody(WorldMatrix matrix) { return; }
+        private void setAdjacentNeighborsFreeFalling(WorldMatrix matrix, int depth, Vector3 lastValidLocation) {
+            if (depth > 0) return;
+
+            Element adjacentNeighbor1 = matrix.get(lastValidLocation.X + 1, lastValidLocation.Y);
+            if (adjacentNeighbor1 is Solid) {
+                bool wasSet = setElementFreeFalling(adjacentNeighbor1);
+                if (wasSet) {
+                    matrix.reportToChunkActive(adjacentNeighbor1);
+                }
+            }
+
+            Element adjacentNeighbor2 = matrix.get(lastValidLocation.X - 1, lastValidLocation.Y);
+            if (adjacentNeighbor2 is Solid) {
+                bool wasSet = setElementFreeFalling(adjacentNeighbor2);
+                if (wasSet) {
+                    matrix.reportToChunkActive(adjacentNeighbor2);
+                }
+            }
+        }
+
+        private bool setElementFreeFalling(Element element) {
+            element.isFreeFalling = rng.Next() > element.inertialResistance || element.isFreeFalling;
+            return element.isFreeFalling;
+        }
+
+
+
+        private int getAdditional(float val) {
+            if (val < -.1f) {
+                return (int)Math.Floor(val);
+            }
+            else if (val > .1f) {
+                return (int)Math.Ceiling(val);
+            } else {
+                return 0;
+            }
+        }
+
+        private float averageVel(float vel, float otherVel) {
+            if (otherVel > -125f) {
+                return -124f;
+            }
+            float avg = (vel + otherVel) / 2;
+            if (avg > 0) {
+                return avg;
+            } else {
+                return Math.Min(avg, -124f);
+            }
+        }
     }
 }

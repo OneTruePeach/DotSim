@@ -22,6 +22,7 @@ namespace DotSim
         public bool isFreeFalling = true;
         public bool isDead = false;
         public float frictionFactor;
+        public float inertialResistance;
 
         //public Color color;
         //public ElementType elementType;
