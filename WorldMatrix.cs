@@ -7,11 +7,13 @@ using System.Text;
 
 namespace DotSim
 {
+    //6 is the pixelSizeModifier of the matrix
     public class WorldMatrix
     {
-        public int colSize;
-        public int rowSize;
+        public int colSize; //inner
+        public int rowSize; //outer
         public int pixelSizeMultiplier = 6;
+        private List<int> shuffledXIndexes { get; set; }
         public bool useChunks = true;
         //public int drawThreadCount = 8; //multithreading todo
 
@@ -23,10 +25,11 @@ namespace DotSim
             rowSize = height / pixelSizeMultiplier;
             matrix = generateMatrix();
             chunks = generateChunks();
+            shuffledXIndexes = generateShuffledIndexes(colSize);
         }
 
         /// <summary>
-        /// I think this works as expected, but I'm not 100% sure how nested lists behave.
+        /// Generates chunks for element matrix
         /// </summary>
         /// <returns>A 2D array of Chunk objects, just large enough to "cover" the world matrix.</returns>
         private List<List<Chunk>> generateChunks() {
@@ -48,17 +51,19 @@ namespace DotSim
         }
 
         /// <summary>
-        /// 
+        /// Fills the matrix with empty elements to initialize it
         /// </summary>
-        /// <returns></returns>
+        /// <returns> a 2D array of "Element.EmptyCell"s</returns>
         private List<List<Element>> generateMatrix() {
             List<List<Element>> outerArray = new List<List<Element>>(rowSize);
             for (int y = 0; y < rowSize; y++) {
-                List<Element> innerArr = new List<Element>(colSize);
+                List<Element> innerArray = new List<Element>(colSize);
                 for ( int x = 0; x < colSize; x++) {
-                    innerArr.Add(ElementType.EMPTYCELL.createElementByMatrix(x, y));
+                    innerArray.Add(ElementType.EMPTYCELL.createElementByMatrix(x, y));
                 }
+                outerArray.Add(innerArray);
             }
+            return outerArray;
         }
 
         public bool shouldStepElementInChunk(Element element) {
@@ -78,8 +83,98 @@ namespace DotSim
             return null;
         }
 
+        private void stepAll() {
+            for (int y = 0; y < colSize; y++) {
+                List<Element> row = getRow(y);
+                foreach (int x in shuffledXIndexes) {
+                    Element element = row[x];
+                    if (element != null) {
+                        element.step(this);
+                    }
+                }
+            }
+        }
+
+        public List<Element> getRow(int index) { return matrix[index]; }
+        public Element get(Vector3 location) { return get((int)location.X, (int)location.Y); }
+        public Element get(float x, float y) { return get((int)x, (int)y); }
+        public Element get(int x, int y) {
+            if (isWithinBounds(x, y)) {
+                return matrix[y][x];
+            } else {
+                return null;
+            }
+        }
+
+        public int toMatrix(float pixelVal) { return toMatrix((int)pixelVal); }
+        public int toMatrix(int pixelVal) { return pixelVal / 6; }
+
+        public bool setElementAtIndex(int x, int y, Element element) {
+            matrix[x][y] = element;
+            element.setCoordinatesByMatrix(x, y);
+            return true;
+        }
+
+
+        public void spawnElementByPixel(int pixelX, int pixelY, ElementType elementType) {
+            int matrixX = toMatrix(pixelX);
+            int matrixY = toMatrix(pixelY);
+            spawnElementByMatrix(matrixX, matrixY, elementType);
+        }
+
+        public Element spawnElementByMatrix(int matrixX, int matrixY, ElementType elementType) {
+            if (isWithinBounds(matrixX, matrixY)) {
+                Element currentElement = get(matrixX, matrixY);
+                get(matrixX, matrixY).die(this);
+                Element newElement = elementType.createElementByMatrix(matrixX, matrixY);
+                setElementAtIndex(matrixX, matrixY, newElement);
+                reportToChunkActive(newElement);
+                return newElement;
+            }
+            return null;
+        }
+
+        public bool isWithinBounds(Vector2 vec) { return isWithinBounds((int)vec.X, (int)vec.Y); }
         public bool isWithinBounds(int matrixX, int matrixY) {
             return matrixX >= 0 && matrixY >= 0 && matrixX < rowSize && matrixY < colSize;
+        }
+        
+        public void reportToChunkActive(Element element) { reportToChunkActive(element.matrixX, element.matrixY); }
+        public void reportToChunkActive(int x, int y) {
+            if (useChunks && isWithinBounds(x, y)) {
+                if (x % Chunk.size == 0) {
+                    Chunk chunk = getChunkForCoordinates(x - 1, y);
+                    if (chunk != null) chunk.shouldStepNextFrame = true;
+                }
+                if (x % Chunk.size == Chunk.size - 1) {
+                    Chunk chunk = getChunkForCoordinates(x + 1, y);
+                    if (chunk != null) chunk.shouldStepNextFrame = true;
+                }
+                if (y % Chunk.size == 0) {
+                    Chunk chunk = getChunkForCoordinates(x, y - 1);
+                    if (chunk != null) chunk.shouldStepNextFrame = true;
+                }
+                if (y % Chunk.size == Chunk.size - 1) {
+                    Chunk chunk = getChunkForCoordinates(x, y + 1);
+                    if (chunk != null) chunk.shouldStepNextFrame = true;
+                }
+                getChunkForCoordinates(x, y).shouldStepNextFrame = true;
+            }
+        }
+
+        public Chunk getChunkForCoordinates(int x, int y) {
+            if (isWithinBounds(x, y)) {
+                int chunkY = y / Chunk.size;
+                int chunkX = x / Chunk.size;
+                return chunks[chunkY][chunkX];
+            }
+            return null;
+        }
+
+        private List<int> generateShuffledIndexes(int size) {
+            List<int> list = new List<int>();
+            for (int i = 0; i < size; i++) { list.Add(i); }
+            return list;
         }
     }
 }
