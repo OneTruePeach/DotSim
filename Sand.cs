@@ -14,9 +14,10 @@ namespace DotSim
             vel = new Vector3(rng.Next() > 0.5 ? -1 : 1, -124f, 0f);
             frictionFactor = 0.9f;
             inertialResistance = .1f;
+            elementName = "Sand";
             //mass = 150;
         }
-
+        public override bool actOnOther(Element other, WorldMatrix matrix) { return true; }
         //override public bool receiveHeat(WorldMatrix matrix, int heat) { return false;  }
     }
 }

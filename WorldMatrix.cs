@@ -7,7 +7,6 @@ using System.Text;
 
 namespace DotSim
 {
-    //6 is the pixelSizeModifier of the matrix
     public class WorldMatrix
     {
         public int colSize; //inner
@@ -59,7 +58,7 @@ namespace DotSim
             for (int y = 0; y < rowSize; y++) {
                 List<Element> innerArray = new List<Element>(colSize);
                 for ( int x = 0; x < colSize; x++) {
-                    innerArray.Add(ElementType.EMPTYCELL.createElementByMatrix(x, y));
+                    innerArray.Add(Element.createElementByMatrix(x, y, "EmptyCell"));
                 }
                 outerArray.Add(innerArray);
             }
@@ -116,17 +115,17 @@ namespace DotSim
         }
 
 
-        public void spawnElementByPixel(int pixelX, int pixelY, ElementType elementType) {
+        public void spawnElementByPixel(int pixelX, int pixelY, Element element) {
             int matrixX = toMatrix(pixelX);
             int matrixY = toMatrix(pixelY);
-            spawnElementByMatrix(matrixX, matrixY, elementType);
+            spawnElementByMatrix(matrixX, matrixY, element);
         }
 
-        public Element spawnElementByMatrix(int matrixX, int matrixY, ElementType elementType) {
+        public Element spawnElementByMatrix(int matrixX, int matrixY, Element element) {
             if (isWithinBounds(matrixX, matrixY)) {
                 Element currentElement = get(matrixX, matrixY);
-                get(matrixX, matrixY).die(this);
-                Element newElement = elementType.createElementByMatrix(matrixX, matrixY);
+                //get(matrixX, matrixY).die(this);
+                Element newElement = Element.createElementByMatrix(matrixX, matrixY, element.elementName);
                 setElementAtIndex(matrixX, matrixY, newElement);
                 reportToChunkActive(newElement);
                 return newElement;

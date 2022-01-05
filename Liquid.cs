@@ -56,7 +56,7 @@ namespace DotSim
             int upperBound = Math.Max(Math.Abs(velXDeltaTime), Math.Abs(velYDeltaTime));
             int lowerBound = Math.Min(Math.Abs(velXDeltaTime), Math.Abs(velYDeltaTime));
 
-            float slope = (lowerBound == 0 || upperBound == 0) ? 0f : ((float)((lowerBound + 1) / (upperBound + 1)));
+            float slope = (lowerBound == 0 || upperBound == 0) ? 0f : ((lowerBound + 1) / (upperBound + 1));
 
             int smallerCount;
 
@@ -84,7 +84,7 @@ namespace DotSim
                     lastValidLocation.Y = modifiedMatrixY;
 
                 } else {
-                    matrix.setElementAtIndex(matrixX, matrixY, ElementType.EMPTYCELL.createElementByMatrix(matrixX, matrixY));
+                    matrix.setElementAtIndex(matrixX, matrixY, createElementByMatrix(matrixX, matrixY, "EmptyCell"));
                     return;
                 }
             }
@@ -103,7 +103,7 @@ namespace DotSim
         override protected bool actOnNeighboringElement(Element neighbor, int modifiedMatrixX, int modifiedMatrixY, WorldMatrix matrix, bool isFinal, bool isFirst, Vector3 lastValidLocation, int depth) {
             bool acted = actOnOther(neighbor, matrix);
             if (acted) return false;
-            if (neighbor is EmptyCell) { //also if its a particle (not implemented)
+            if (neighbor is EmptyCell) { //or particle (todo)
                 if (isFinal) {
                     isFreeFalling = true;
                     swapPositions(matrix, neighbor, modifiedMatrixX, modifiedMatrixY);
@@ -133,7 +133,7 @@ namespace DotSim
 
                 if (isFreeFalling) {
                     float absY = Math.Max(Math.Abs(vel.Y) / 31, 105);
-                    vel.X = vel.X < 0 ? -absY : absY; //but why not tho
+                    vel.X = vel.X < 0 ? -absY : absY;
                 }
 
                 Vector3 normalizedVel = vel;

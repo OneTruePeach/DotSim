@@ -23,9 +23,10 @@ namespace DotSim
         public bool isDead = false;
         public float frictionFactor;
         public float inertialResistance;
+        public int coolingFactor = 5;
 
         //public Color color;
-        //public ElementType elementType;
+        public string elementName;
         //public PhysicsElementActor owningBody = null;
         //public Vector2 owningBodyCoords = null;
         //public List<Vector2> secondaryMatrixCoords = new List<Vector2>;
@@ -34,14 +35,14 @@ namespace DotSim
 
         public Element(int x, int y) { 
             setCoordinatesByMatrix(x, y);
-            //elementType = getEnumType();
-            //color = ColorConstants.getColorForElementType(this.elementType, x, y);
+            //color = ColorConstants.getColorForElementType(this.elementName, x, y);
             stepped.Set(0, false);
         }
 
         public abstract void step(WorldMatrix matrix);
 
-        public bool actOnOther(Element other, WorldMatrix matrix) { return false; } //materials usually override this
+        public abstract bool actOnOther(Element other, WorldMatrix matrix);
+        //public abstract bool receiveHeat(WorldMatrix matrix, int heat);
 
         public void swapPositions(WorldMatrix matrix, Element toSwap) { swapPositions(matrix, toSwap, toSwap.matrixX, toSwap.matrixY); }
         public void swapPositions(WorldMatrix matrix, Element toSwap, int toSwapX, int toSwapY) {
@@ -82,20 +83,44 @@ namespace DotSim
             matrix.setElementAtIndex((int)moveToLocation.X, (int)moveToLocation.Y, toSwap);
         }
 
-        //public void dieAndReplace(WorldMatrix matrix, ElementType type) { die(matrix, type); }
-        //public void die(WorldMatrix matrix) { die(matrix, ElementType.EMPTYCELL); }
-        //public void die(WorldMatrix matrix, ElementType type) {
-        //    isDead = true;
-        //    Element newElement = type.createElementByMatrix(matrixX, matrixY);
-        //    matrix.setElementAtIndex(matrixX, matrixY, newElement);
-        //   matrix.reportToChunkActive(matrixX, matrixY);
-        //    if (owningBody != null) {
-        //        owningBody.elementDeath(this, newElement);
-        //        foreach(Vector2 vector in secondaryMatrixCoords) {
-        //            matrix.setElementAtIndex((int)vector.X, (int)vector.Y, ElementType.EMPTYCELL.createElementByMatrix(0, 0));
-        //        }
-        //    }
-        //}
+        public void dieAndReplace(WorldMatrix matrix, string element) { die(matrix, element); }
+        public void die(WorldMatrix matrix) { die(matrix, "EmptyCell"); }
+        public void die(WorldMatrix matrix, string element) {
+            isDead = true;
+            Element newElement = createElementByMatrix(matrixX, matrixY, element);
+            matrix.setElementAtIndex(matrixX, matrixY, newElement);
+           matrix.reportToChunkActive(matrixX, matrixY);
+            if (owningBody != null) {
+                owningBody.elementDeath(this, newElement);
+                foreach(Vector2 vector in secondaryMatrixCoords) {
+                    matrix.setElementAtIndex((int)vector.X, (int)vector.Y, createElementByMatrix(0, 0, element));
+                }
+            }
+        }
+
+        /// <summary>
+        /// Spawns an element at a location. TODO: make this abstract and have individual materials override it(?)
+        /// </summary>
+        /// <returns>An instance of the specified element</returns>
+        public static Element createElementByMatrix(int x, int y, Element element) {
+            if (element is EmptyCell) { return EmptyCell.getInstance(); }
+            if (element is Sand) { return new Sand(x, y); }
+            if (element is Stone) { return new Stone(x, y); }
+            if (element is Water) { return new Water(x, y); }
+            return null;
+        }
+
+        /// <summary>
+        /// Spawns an element at a location. TODO: make this abstract and have individual materials override it(?)
+        /// </summary>
+        /// <returns>An instance of the specified element</returns>
+        public static Element createElementByMatrix(int x, int y, string element) {
+            if (element == "EmptyCell") { return EmptyCell.getInstance(); }
+            if (element == "Sand") { return new Sand(x, y); }
+            if (element == "Stone") { return new Stone(x, y); }
+            if (element == "Water") { return new Water(x, y); }
+            return null;
+        }
 
         public bool didNotMove(Vector3 formerLocation) { return formerLocation.X == matrixX && formerLocation.Y == matrixY; }
         public bool hasNotMovedBeyondThreshold() { return stoppedMovingCount >= stoppedMovingThreshold; }

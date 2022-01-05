@@ -11,12 +11,13 @@ namespace DotSim
 
         private static Element element;
 
-        private EmptyCell(int x, int y) : base(x, y){}
+        private EmptyCell(int x, int y) : base(x, y){ elementName = "EmptyCell"; }
 
         public static Element getInstance() { return (element == null) ? new EmptyCell(-1, -1) : element; }
 
         override public void step(WorldMatrix matrix){}
         override protected bool actOnNeighboringElement(Element neighbor, int modifiedMatrixX, int modifiedMatrixY, WorldMatrix matrix, bool isFinal, bool isFirst, Vector3 lastValidLocation, int depth) { return true; }
+        public override bool actOnOther(Element other, WorldMatrix matrix) { return true; }
 
     }
 }

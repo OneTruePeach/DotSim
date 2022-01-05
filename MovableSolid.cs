@@ -87,7 +87,7 @@ namespace DotSim
                     lastValidLocation.Y = modifiedMatrixY;
 
                 } else {
-                    matrix.setElementAtIndex(matrixX, matrixY, ElementType.EMPTYCELL.createElementByMatrix(matrixX, matrixY));
+                    matrix.setElementAtIndex(matrixX, matrixY, createElementByMatrix(matrixX, matrixY, "EmptyCell"));
                     return;
                 }
             }

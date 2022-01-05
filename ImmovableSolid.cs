@@ -13,5 +13,6 @@ namespace DotSim
 
         public override void step(WorldMatrix matrix) { base.step(matrix); }
         protected override bool actOnNeighboringElement(Element neighbor, int modifiedMatrixX, int modifiedMatrixY, WorldMatrix matrix, bool isFinal, bool isFirst, Vector3 lastValidLocation, int depth) { return true; }
+        public override bool actOnOther(Element other, WorldMatrix matrix) { return true; }
     }
 }

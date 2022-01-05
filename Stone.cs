@@ -14,6 +14,7 @@ namespace DotSim
             vel = new Vector3(0f, 0f, 0f);
             frictionFactor = 0.5f;
             inertialResistance = 1.1f;
+            elementName = "Stone";
             //mass = 500;
             //explosionResistance = 4;
         }
