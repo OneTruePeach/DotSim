@@ -5,7 +5,7 @@ using System.Text;
 
 namespace DotSim
 {
-    class ImmovableSolid : Solid
+    public abstract class ImmovableSolid : Solid
     {
         public ImmovableSolid(int x, int y) : base(x, y) {
             isFreeFalling = false;

@@ -15,10 +15,10 @@ namespace DotSim
             frictionFactor = 0.5f;
             inertialResistance = 1.1f;
             elementName = "Stone";
-            //mass = 500;
-            //explosionResistance = 4;
+            mass = 500;
+            explosionResistance = 4;
         }
 
-        //override public bool receiveHeat(WorldMatrix matrix, int heat) { return false; } 
+        override public bool receiveHeat(WorldMatrix matrix, int heat) { return false; } 
     }
 }

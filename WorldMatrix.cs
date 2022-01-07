@@ -11,7 +11,7 @@ namespace DotSim
     {
         public int colSize; //inner
         public int rowSize; //outer
-        public int pixelSizeMultiplier = 6;
+        public static int pixelSizeMultiplier = 6;
         private List<int> shuffledXIndexes { get; set; }
         public bool useChunks = true;
         //public int drawThreadCount = 8; //multithreading todo
@@ -124,8 +124,20 @@ namespace DotSim
         public Element spawnElementByMatrix(int matrixX, int matrixY, Element element) {
             if (isWithinBounds(matrixX, matrixY)) {
                 Element currentElement = get(matrixX, matrixY);
-                //get(matrixX, matrixY).die(this);
+                currentElement.die(this);
                 Element newElement = Element.createElementByMatrix(matrixX, matrixY, element.elementName);
+                setElementAtIndex(matrixX, matrixY, newElement);
+                reportToChunkActive(newElement);
+                return newElement;
+            }
+            return null;
+        }
+
+        public Element spawnElementByMatrix(int matrixX, int matrixY, string elementName) {
+            if (isWithinBounds(matrixX, matrixY)) {
+                Element currentElement = get(matrixX, matrixY);
+                currentElement.die(this);
+                Element newElement = Element.createElementByMatrix(matrixX, matrixY, elementName);
                 setElementAtIndex(matrixX, matrixY, newElement);
                 reportToChunkActive(newElement);
                 return newElement;

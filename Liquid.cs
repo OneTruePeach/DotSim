@@ -9,7 +9,6 @@ namespace DotSim
 {
     public abstract class Liquid : Element {
 
-        private Random rng = new Random();
         public int density;
         public int dispersionRate;
         public int yUnchangedCount = 0;
@@ -29,8 +28,7 @@ namespace DotSim
             int xModifier = vel.X < 0 ? -1 : 1;
             float velYDeltaTimeFloat = (Math.Abs(vel.Y) * 1/60);
             float velXDeltaTimeFloat = (Math.Abs(vel.X) * 1/60);
-            int velXDeltaTime;
-            int velYDeltaTime;
+            int velXDeltaTime, velYDeltaTime;
             if (velXDeltaTimeFloat < 1) {
                 xThreshold += velXDeltaTimeFloat;
                 velXDeltaTime = (int)xThreshold;
@@ -56,10 +54,9 @@ namespace DotSim
             int upperBound = Math.Max(Math.Abs(velXDeltaTime), Math.Abs(velYDeltaTime));
             int lowerBound = Math.Min(Math.Abs(velXDeltaTime), Math.Abs(velYDeltaTime));
 
-            float slope = (lowerBound == 0 || upperBound == 0) ? 0f : ((lowerBound + 1) / (upperBound + 1));
+            float slope = (lowerBound == 0 || upperBound == 0) ? 0f : ((float)((lowerBound + 1) / (upperBound + 1)));
 
             int smallerCount;
-
             Vector3 formerLocation = new Vector3(matrixX, matrixY, 0);
             Vector3 lastValidLocation = new Vector3(matrixX, matrixY, 0);
             for (int i = 1; i <= upperBound; i++) {
@@ -142,7 +139,7 @@ namespace DotSim
                 int additionalX = getAdditional(normalizedVel.X);
                 int additionalY = getAdditional(normalizedVel.Y);
 
-                int distance = additionalX * (rng.Next() > 0.5 ? dispersionRate + 2 : dispersionRate - 1);
+                int distance = additionalX * (rng.NextDouble() > 0.5 ? dispersionRate + 2 : dispersionRate - 1);
 
                 Element diagonalNeighbor = matrix.get(matrixX + additionalX, matrixY + additionalY);
                 if (isFirst) {
@@ -183,7 +180,7 @@ namespace DotSim
                 int additionalX = getAdditional(normalizedVel.X);
                 int additionalY = getAdditional(normalizedVel.Y);
 
-                int distance = additionalX * (rng.Next() > 0.5 ? dispersionRate + 2 : dispersionRate - 1);
+                int distance = additionalX * (rng.NextDouble() > 0.5 ? dispersionRate + 2 : dispersionRate - 1);
 
                 Element diagonalNeighbor = matrix.get(matrixX + additionalX, matrixY + additionalY);
                 if (isFirst) {
@@ -259,7 +256,7 @@ namespace DotSim
 
         private void swapLiquidByDensity(WorldMatrix matrix, Liquid neighbor, int neighborX, int neighborY, Vector3 lastValidLocation) {
             vel.Y = -62;
-            if (rng.Next() > 0.8f) vel.X *= -1;
+            if (rng.NextDouble() > 0.8f) vel.X *= -1;
             moveToLastValidAndSwap(matrix, neighbor, neighborX, neighborY, lastValidLocation);
         }
 

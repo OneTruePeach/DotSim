@@ -9,8 +9,6 @@ namespace DotSim
 {
     public abstract class MovableSolid : Solid
     {
-        private Random rng = new Random();
-
         public MovableSolid(int x, int y) : base(x, y) {
             stoppedMovingThreshold = 5;
         }
@@ -30,8 +28,8 @@ namespace DotSim
 
             int yModifier = vel.Y < 0 ? -1 : 1;
             int xModifier = vel.X < 0 ? -1 : 1;
-            float velYDeltaTimeFloat = (Math.Abs(vel.Y) * 1 / 60);
-            float velXDeltaTimeFloat = (Math.Abs(vel.X) * 1 / 60);
+            float velYDeltaTimeFloat = (Math.Abs(vel.Y) * 1/60);
+            float velXDeltaTimeFloat = (Math.Abs(vel.X) * 1/60);
             int velXDeltaTime;
             int velYDeltaTime;
             if (velXDeltaTimeFloat < 1) {
@@ -191,7 +189,7 @@ namespace DotSim
         }
 
         private bool setElementFreeFalling(Element element) {
-            element.isFreeFalling = rng.Next() > element.inertialResistance || element.isFreeFalling;
+            element.isFreeFalling = rng.NextDouble() > element.inertialResistance || element.isFreeFalling;
             return element.isFreeFalling;
         }
 

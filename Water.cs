@@ -17,35 +17,35 @@ namespace DotSim
             dispersionRate = 5;
             coolingFactor = 5;
             elementName = "Water";
-            //mass = 100;
-            //explosionResistance = 0;
+            mass = 100;
+            explosionResistance = 0;
         }
 
-        /*override public bool receiveHeat(WorldMatrix matrix, int heat) {
-            dieAndReplace(matrix, ElementType.STEAM);
+        override public bool receiveHeat(WorldMatrix matrix, int heat) {
+            dieAndReplace(matrix, "Steam");
             return true;
-        }*/
+        }
 
-        override public bool actOnOther(Element other, WorldMatrix matrix) { return true; }
-            /*//other.cleanColor(); //water washes other materials
+        override public bool actOnOther(Element other, WorldMatrix matrix) {
+            other.cleanColor(); //water washes other materials
             if (other.shouldApplyHeat()) {
                 other.receiveCooling(matrix, coolingFactor);
                 coolingFactor--;
                 if (coolingFactor <= 0) {
-                    dieAndReplace(matrix, ElementType.STEAM);
+                    dieAndReplace(matrix, "Steam");
                     return true;
                 }
                 return false;
             }
             return false;
-        }*/
-    }
-    /*override public bool explode(WorldMatrix matrix, int strength) {
-        if (explosionResistance < strength) {
-            dieAndReplace(matrix, ElementType.STEAM);
-            return true;
-        } else {
-            return false;
         }
-    }*/
+
+        override public bool explode(WorldMatrix matrix, int strength) { 
+            if (explosionResistance < strength) {
+                dieAndReplace(matrix, "Steam");
+                return true;
+            } else { return false; }
+        }
+    }
+    
 }
