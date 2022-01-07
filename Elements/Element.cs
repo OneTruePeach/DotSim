@@ -1,10 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
-using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Text;
 
 namespace DotSim
 {
@@ -60,8 +57,10 @@ namespace DotSim
             stepped.Set(0, false);
         }
 
+        public virtual void CustomElementFunctions(WorldMatrix matrix) { }
+
         public abstract void Step(WorldMatrix matrix);
-        public abstract bool ActOnOther(Element other, WorldMatrix matrix);
+        public virtual bool ActOnOther(Element other, WorldMatrix matrix) { return false; }
         protected abstract bool ActOnNeighboringElement(Element neighbor, int modifiedMatrixX, int modifiedMatrixY, WorldMatrix matrix, bool isFinal, bool isFirst, Vector3 lastValidLocation, int depth);
 
         public void SwapPositions(WorldMatrix matrix, Element toSwap) { SwapPositions(matrix, toSwap, toSwap.matrixX, toSwap.matrixY); }
