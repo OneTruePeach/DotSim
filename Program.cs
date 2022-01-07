@@ -7,8 +7,7 @@ namespace DotSim
         [STAThread]
         static void Main()
         {
-            using (var game = new DotSim())
-                game.Run();
+            using (var game = new DotSim()) { game.Run(); }
         }
     }
 }

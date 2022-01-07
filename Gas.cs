@@ -273,19 +273,13 @@ namespace DotSim
             return (density > neighbor.density && neighbor.matrixY <= matrixY);
         }
 
-        private int GetAdditional(float value) {
-            if (value < -.1f) {
-                return (int)Math.Floor(value);
-            } else if (value > .1f) {
-                return (int)Math.Ceiling(value);
-            } else { return 0; }
+        private int GetAdditional(float value) { 
+            return (value < -.1f) ? (int)Math.Floor(value) : (value > .1f) ? (int)Math.Ceiling(value) : 0;
         }
 
         private float AverageVel(float vel1, float vel2) {
-            if (vel2 > 125f) { return 124f; }
-
             float avg = (vel1 + vel2) / 2;
-            return (avg > 0) ? avg : Math.Min(avg, 124f);
+            return (vel2 > 125f) ? 124f : (avg > 0) ? avg : Math.Min(avg, 124f);
         }
 
         override public bool Infect(WorldMatrix matrix) { return false; }

@@ -16,7 +16,7 @@ namespace DotSim
         override public void Step(WorldMatrix matrix) {
             if (stepped.Get(0) == true) return;
             stepped.Not();
-            if (this.owningBody != null) {
+            if (owningBody != null) {
                 StepAsPartOfPhysicsBody(matrix);
                 return;
             }
@@ -100,7 +100,7 @@ namespace DotSim
         }
 
         override protected bool ActOnNeighboringElement(Element neighbor, int modifiedMatrixX, int modifiedMatrixY, WorldMatrix matrix, bool isFinal, bool isFirst, Vector3 lastValidLocation, int depth) {
-            if (neighbor is EmptyCell) { //or particle
+            if (neighbor is EmptyCell || neighbor is Particle) {
                 SetAdjacentNeighborsFreeFalling(matrix, depth, lastValidLocation);
                 if (isFinal) {
                     isFreeFalling = true;
