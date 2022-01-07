@@ -21,18 +21,18 @@ namespace DotSim
             explosionResistance = 0;
         }
 
-        override public bool receiveHeat(WorldMatrix matrix, int heat) {
-            dieAndReplace(matrix, "Steam");
+        override public bool ReceiveHeat(WorldMatrix matrix, int heat) {
+            DieAndReplace(matrix, "Steam");
             return true;
         }
 
-        override public bool actOnOther(Element other, WorldMatrix matrix) {
-            other.cleanColor(); //water washes other materials
-            if (other.shouldApplyHeat()) {
-                other.receiveCooling(matrix, coolingFactor);
+        override public bool ActOnOther(Element other, WorldMatrix matrix) {
+            other.CleanColor(); //water washes other materials
+            if (other.ShouldApplyHeat()) {
+                other.ReceiveCooling(matrix, coolingFactor);
                 coolingFactor--;
                 if (coolingFactor <= 0) {
-                    dieAndReplace(matrix, "Steam");
+                    DieAndReplace(matrix, "Steam");
                     return true;
                 }
                 return false;
@@ -40,9 +40,9 @@ namespace DotSim
             return false;
         }
 
-        override public bool explode(WorldMatrix matrix, int strength) { 
+        override public bool Explode(WorldMatrix matrix, int strength) { 
             if (explosionResistance < strength) {
-                dieAndReplace(matrix, "Steam");
+                DieAndReplace(matrix, "Steam");
                 return true;
             } else { return false; }
         }

@@ -19,6 +19,6 @@ namespace DotSim
             explosionResistance = 4;
         }
 
-        override public bool receiveHeat(WorldMatrix matrix, int heat) { return false; } 
+        override public bool ReceiveHeat(WorldMatrix matrix, int heat) { return false; } 
     }
 }

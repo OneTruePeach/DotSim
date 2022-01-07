@@ -16,10 +16,10 @@ namespace DotSim
 
         public Liquid(int x, int y) : base(x, y) { stoppedMovingThreshold = 10; }
 
-        override public void step(WorldMatrix matrix) {
+        override public void Step(WorldMatrix matrix) {
             if (stepped.Get(0) == true) return;
             stepped.Not();
-            if (matrix.useChunks && !matrix.shouldStepElementInChunk(this)) return;
+            if (matrix.useChunks && !matrix.ShouldStepElementInChunk(this)) return;
 
             vel = Vector3.Add(vel, new Vector3(0f, -0.5f, 0f));
             if (isFreeFalling) vel.X *= 0.8f;
@@ -72,47 +72,46 @@ namespace DotSim
 
                 int modifiedMatrixY = matrixY + (yIncrease * yModifier);
                 int modifiedMatrixX = matrixX + (xIncrease * xModifier);
-                if (matrix.isWithinBounds(modifiedMatrixX, modifiedMatrixY)) {
-                    Element neighbor = matrix.get(modifiedMatrixX, modifiedMatrixY);
+                if (matrix.IsWithinBounds(modifiedMatrixX, modifiedMatrixY)) {
+                    Element neighbor = matrix.Get(modifiedMatrixX, modifiedMatrixY);
                     if (neighbor == this) continue;
-                    bool stopped = actOnNeighboringElement(neighbor, modifiedMatrixX, modifiedMatrixY, matrix, i == upperBound, i == 1, lastValidLocation, 0);
+                    bool stopped = ActOnNeighboringElement(neighbor, modifiedMatrixX, modifiedMatrixY, matrix, i == upperBound, i == 1, lastValidLocation, 0);
                     if (stopped) break;
                     lastValidLocation.X = modifiedMatrixX;
                     lastValidLocation.Y = modifiedMatrixY;
 
                 } else {
-                    matrix.setElementAtIndex(matrixX, matrixY, createElementByMatrix(matrixX, matrixY, "EmptyCell"));
+                    matrix.SetElementAtIndex(matrixX, matrixY, CreateElementByMatrix(matrixX, matrixY, "EmptyCell"));
                     return;
                 }
             }
 
-            stoppedMovingCount = didNotMove(formerLocation) ? stoppedMovingCount + 1 : 0;
+            stoppedMovingCount = DidNotMove(formerLocation) ? stoppedMovingCount + 1 : 0;
             if (stoppedMovingCount > stoppedMovingThreshold) { stoppedMovingCount = stoppedMovingThreshold; }
             if (matrix.useChunks) {
-                if (!hasNotMovedBeyondThreshold()) {
-                    matrix.reportToChunkActive(this);
-                    matrix.reportToChunkActive((int)formerLocation.X, (int)formerLocation.Y);
+                if (!HasNotMovedBeyondThreshold()) {
+                    matrix.ReportToChunkActive(this);
+                    matrix.ReportToChunkActive((int)formerLocation.X, (int)formerLocation.Y);
                 }
             }
 
         }
 
-        override protected bool actOnNeighboringElement(Element neighbor, int modifiedMatrixX, int modifiedMatrixY, WorldMatrix matrix, bool isFinal, bool isFirst, Vector3 lastValidLocation, int depth) {
-            bool acted = actOnOther(neighbor, matrix);
+        override protected bool ActOnNeighboringElement(Element neighbor, int modifiedMatrixX, int modifiedMatrixY, WorldMatrix matrix, bool isFinal, bool isFirst, Vector3 lastValidLocation, int depth) {
+            bool acted = ActOnOther(neighbor, matrix);
             if (acted) return false;
             if (neighbor is EmptyCell) { //or particle (todo)
                 if (isFinal) {
                     isFreeFalling = true;
-                    swapPositions(matrix, neighbor, modifiedMatrixX, modifiedMatrixY);
+                    SwapPositions(matrix, neighbor, modifiedMatrixX, modifiedMatrixY);
                 } else {
                     return false;
                 }
             }
-            else if (neighbor is Liquid) {
-                Liquid liquidNeighbor = (Liquid)neighbor;
-                if (compareDensities(liquidNeighbor)) {
+            else if (neighbor is Liquid liquidNeighbor) {
+                if (CompareDensities(liquidNeighbor)) {
                     if (isFinal) {
-                        swapLiquidByDensity(matrix, liquidNeighbor, modifiedMatrixX, modifiedMatrixY, lastValidLocation);
+                        SwapLiquidByDensity(matrix, liquidNeighbor, modifiedMatrixX, modifiedMatrixY, lastValidLocation);
                         return true;
                     } else {
                         lastValidLocation.X = modifiedMatrixX;
@@ -124,7 +123,7 @@ namespace DotSim
                 if (depth > 0) return true;
 
                 if (isFinal) {
-                    moveToLastValid(matrix, lastValidLocation);
+                    MoveToLastValid(matrix, lastValidLocation);
                     return true;
                 }
 
@@ -136,14 +135,14 @@ namespace DotSim
                 Vector3 normalizedVel = vel;
                 normalizedVel.Normalize();
 
-                int additionalX = getAdditional(normalizedVel.X);
-                int additionalY = getAdditional(normalizedVel.Y);
+                int additionalX = GetAdditional(normalizedVel.X);
+                int additionalY = GetAdditional(normalizedVel.Y);
 
                 int distance = additionalX * (rng.NextDouble() > 0.5 ? dispersionRate + 2 : dispersionRate - 1);
 
-                Element diagonalNeighbor = matrix.get(matrixX + additionalX, matrixY + additionalY);
+                Element diagonalNeighbor = matrix.Get(matrixX + additionalX, matrixY + additionalY);
                 if (isFirst) {
-                    vel.Y = averageVel(vel.Y, neighbor.vel.Y);
+                    vel.Y = AverageVel(vel.Y, neighbor.vel.Y);
                 } else {
                     vel.Y = -124;
                 }
@@ -151,7 +150,7 @@ namespace DotSim
                 neighbor.vel.Y = vel.Y;
                 vel.X *= frictionFactor;
                 if (diagonalNeighbor != null) {
-                    bool stoppedDiagonally = iterateToAdditional(matrix, matrixX + additionalX, matrixY + additionalY, distance, lastValidLocation);
+                    bool stoppedDiagonally = IterateToAdditional(matrix, matrixX + additionalX, matrixY + additionalY, distance, lastValidLocation);
                     if (!stoppedDiagonally) {
                         isFreeFalling = true;
                         return true;
@@ -160,12 +159,12 @@ namespace DotSim
 
                 isFreeFalling = false;
 
-                moveToLastValid(matrix, lastValidLocation);
+                MoveToLastValid(matrix, lastValidLocation);
                 return true;
             } else if (neighbor is Solid) {
                 if (depth > 0) return true;
                 if (isFinal) {
-                    moveToLastValid(matrix, lastValidLocation);
+                    MoveToLastValid(matrix, lastValidLocation);
                     return true;
                 }
 
@@ -177,29 +176,29 @@ namespace DotSim
                 Vector3 normalizedVel = vel;
                 normalizedVel.Normalize();
 
-                int additionalX = getAdditional(normalizedVel.X);
-                int additionalY = getAdditional(normalizedVel.Y);
+                int additionalX = GetAdditional(normalizedVel.X);
+                int additionalY = GetAdditional(normalizedVel.Y);
 
                 int distance = additionalX * (rng.NextDouble() > 0.5 ? dispersionRate + 2 : dispersionRate - 1);
 
-                Element diagonalNeighbor = matrix.get(matrixX + additionalX, matrixY + additionalY);
+                Element diagonalNeighbor = matrix.Get(matrixX + additionalX, matrixY + additionalY);
                 if (isFirst) {
-                    vel.Y = averageVel(vel.Y, neighbor.vel.Y);
+                    vel.Y = AverageVel(vel.Y, neighbor.vel.Y);
                 } else { vel.Y = -124; }
 
                 neighbor.vel.Y = vel.Y;
                 vel.X *= frictionFactor;
                 if (diagonalNeighbor != null) {
-                    bool stoppedDiagonally = iterateToAdditional(matrix, matrixX + additionalX, matrixY + additionalY, distance, lastValidLocation);
+                    bool stoppedDiagonally = IterateToAdditional(matrix, matrixX + additionalX, matrixY + additionalY, distance, lastValidLocation);
                     if (!stoppedDiagonally) {
                         isFreeFalling = true;
                         return true;
                     }
                 }
 
-                Element adjacentNeighbor = matrix.get(matrixX + additionalX, matrixY);
+                Element adjacentNeighbor = matrix.Get(matrixX + additionalX, matrixY);
                 if (adjacentNeighbor != null) {
-                    bool stoppedAdjacently = iterateToAdditional(matrix, matrixX + additionalX, matrixY, distance, lastValidLocation);
+                    bool stoppedAdjacently = IterateToAdditional(matrix, matrixX + additionalX, matrixY, distance, lastValidLocation);
                     if (stoppedAdjacently) vel.X *= -1;
                     if (!stoppedAdjacently) {
                         isFreeFalling = false;
@@ -209,22 +208,22 @@ namespace DotSim
 
                 isFreeFalling = false;
 
-                moveToLastValid(matrix, lastValidLocation);
+                MoveToLastValid(matrix, lastValidLocation);
                 return true;
             }
             return false;
         }
 
-        private bool iterateToAdditional(WorldMatrix matrix, int startingX, int startingY, int distance, Vector3 lastValid) {
+        private bool IterateToAdditional(WorldMatrix matrix, int startingX, int startingY, int distance, Vector3 lastValid) {
             int distanceModifier = distance > 0 ? 1 : -1;
             Vector3 lastValidLocation = lastValid;
             for (int i =0; i <= Math.Abs(distance); i++) {
                 int modifiedX = startingX + i * distanceModifier;
 
-                Element neighbor = matrix.get(modifiedX, startingY);
+                Element neighbor = matrix.Get(modifiedX, startingY);
                 if (neighbor == null) return true;
 
-                bool acted = actOnOther(neighbor, matrix);
+                bool acted = ActOnOther(neighbor, matrix);
                 if (acted) return false;
 
                 bool isFirst = i == 0;
@@ -232,39 +231,38 @@ namespace DotSim
 
                 if (neighbor is EmptyCell) { //or particle (todo)
                     if (isFinal) {
-                        swapPositions(matrix, neighbor, modifiedX, startingY);
+                        SwapPositions(matrix, neighbor, modifiedX, startingY);
                         return false;
                     }
                     lastValidLocation.X = modifiedX;
                     lastValidLocation.Y = startingY;
-                } else if (neighbor is Liquid) {
-                    Liquid liquidNeighbor = (Liquid)neighbor;
+                } else if (neighbor is Liquid liquidNeighbor) {
                     if (isFinal) {
-                        if (compareDensities(liquidNeighbor)) {
-                            swapLiquidByDensity(matrix, liquidNeighbor, modifiedX, startingY, lastValidLocation);
+                        if (CompareDensities(liquidNeighbor)) {
+                            SwapLiquidByDensity(matrix, liquidNeighbor, modifiedX, startingY, lastValidLocation);
                             return false;
                         }
                     }
                 } else if (neighbor is Solid) {
                     if (isFirst) return true;
-                    moveToLastValid(matrix, lastValidLocation);
+                    MoveToLastValid(matrix, lastValidLocation);
                     return false;
                 }
             }
             return true;
         }
 
-        private void swapLiquidByDensity(WorldMatrix matrix, Liquid neighbor, int neighborX, int neighborY, Vector3 lastValidLocation) {
+        private void SwapLiquidByDensity(WorldMatrix matrix, Liquid neighbor, int neighborX, int neighborY, Vector3 lastValidLocation) {
             vel.Y = -62;
             if (rng.NextDouble() > 0.8f) vel.X *= -1;
-            moveToLastValidAndSwap(matrix, neighbor, neighborX, neighborY, lastValidLocation);
+            MoveToLastValidAndSwap(matrix, neighbor, neighborX, neighborY, lastValidLocation);
         }
 
-        private bool compareDensities(Liquid neighbor) {
+        private bool CompareDensities(Liquid neighbor) {
             return (density > neighbor.density && neighbor.matrixY <= matrixY);
         }
 
-        private int getAdditional(float value) {
+        private int GetAdditional(float value) {
             if (value < -.1f) {
                 return (int)Math.Floor(value);
             } else if (value > .1f){
@@ -274,7 +272,7 @@ namespace DotSim
             }
         }
 
-        private float averageVel(float vel1, float vel2) {
+        private float AverageVel(float vel1, float vel2) {
             if (vel2 > -125f) return -124f;
 
             float avg = (vel1 + vel2) / 2;

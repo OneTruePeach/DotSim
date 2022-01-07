@@ -9,14 +9,14 @@ namespace DotSim
 {
     class EmptyCell : Element {
 
-        private static Element element;
+        private static readonly Element element;
 
         private EmptyCell(int x, int y) : base(x, y){ elementName = "EmptyCell"; }
 
-        public static Element getInstance() { return (element == null) ? new EmptyCell(-1, -1) : element; }
+        public static Element GetInstance() { return (element == null) ? new EmptyCell(-1, -1) : element; }
 
-        override public void step(WorldMatrix matrix){}
-        override protected bool actOnNeighboringElement(Element neighbor, int modifiedMatrixX, int modifiedMatrixY, WorldMatrix matrix, bool isFinal, bool isFirst, Vector3 lastValidLocation, int depth) { return true; }
-        public override bool actOnOther(Element other, WorldMatrix matrix) { return true; }
+        override public void Step(WorldMatrix matrix){}
+        override protected bool ActOnNeighboringElement(Element neighbor, int modifiedMatrixX, int modifiedMatrixY, WorldMatrix matrix, bool isFinal, bool isFirst, Vector3 lastValidLocation, int depth) { return true; }
+        public override bool ActOnOther(Element other, WorldMatrix matrix) { return true; }
     }
 }

@@ -13,15 +13,15 @@ namespace DotSim
             stoppedMovingThreshold = 5;
         }
 
-        override public void step(WorldMatrix matrix) {
+        override public void Step(WorldMatrix matrix) {
             if (stepped.Get(0) == true) return;
             stepped.Not();
             if (this.owningBody != null) {
-                stepAsPartOfPhysicsBody(matrix);
+                StepAsPartOfPhysicsBody(matrix);
                 return;
             }
 
-            if (matrix.useChunks && !matrix.shouldStepElementInChunk(this)) return;
+            if (matrix.useChunks && !matrix.ShouldStepElementInChunk(this)) return;
 
             vel = Vector3.Add(vel, new Vector3(0f, -0.5f, 0f));
             if (isFreeFalling) vel.X *= 0.9f;
@@ -76,52 +76,52 @@ namespace DotSim
 
                 int modifiedMatrixY = matrixY + (yIncrease * yModifier);
                 int modifiedMatrixX = matrixX + (xIncrease * xModifier);
-                if (matrix.isWithinBounds(modifiedMatrixX, modifiedMatrixY)) {
-                    Element neighbor = matrix.get(modifiedMatrixX, modifiedMatrixY);
+                if (matrix.IsWithinBounds(modifiedMatrixX, modifiedMatrixY)) {
+                    Element neighbor = matrix.Get(modifiedMatrixX, modifiedMatrixY);
                     if (neighbor == this) continue;
-                    bool stopped = actOnNeighboringElement(neighbor, modifiedMatrixX, modifiedMatrixY, matrix, i == upperBound, i == 1, lastValidLocation, 0);
+                    bool stopped = ActOnNeighboringElement(neighbor, modifiedMatrixX, modifiedMatrixY, matrix, i == upperBound, i == 1, lastValidLocation, 0);
                     if (stopped) break;
                     lastValidLocation.X = modifiedMatrixX;
                     lastValidLocation.Y = modifiedMatrixY;
 
                 } else {
-                    matrix.setElementAtIndex(matrixX, matrixY, createElementByMatrix(matrixX, matrixY, "EmptyCell"));
+                    matrix.SetElementAtIndex(matrixX, matrixY, CreateElementByMatrix(matrixX, matrixY, "EmptyCell"));
                     return;
                 }
             }
-            stoppedMovingCount = didNotMove(formerLocation) ? stoppedMovingCount + 1 : 0;
+            stoppedMovingCount = DidNotMove(formerLocation) ? stoppedMovingCount + 1 : 0;
             if (stoppedMovingCount > stoppedMovingThreshold) { stoppedMovingCount = stoppedMovingThreshold; }
             if (matrix.useChunks) {
-                if (isFreeFalling || !hasNotMovedBeyondThreshold()) {
-                    matrix.reportToChunkActive(this);
-                    matrix.reportToChunkActive((int)formerLocation.X, (int)formerLocation.Y);
+                if (isFreeFalling || !HasNotMovedBeyondThreshold()) {
+                    matrix.ReportToChunkActive(this);
+                    matrix.ReportToChunkActive((int)formerLocation.X, (int)formerLocation.Y);
                 }
             }
         }
 
-        override protected bool actOnNeighboringElement(Element neighbor, int modifiedMatrixX, int modifiedMatrixY, WorldMatrix matrix, bool isFinal, bool isFirst, Vector3 lastValidLocation, int depth) {
+        override protected bool ActOnNeighboringElement(Element neighbor, int modifiedMatrixX, int modifiedMatrixY, WorldMatrix matrix, bool isFinal, bool isFirst, Vector3 lastValidLocation, int depth) {
             if (neighbor is EmptyCell) { //or particle
-                setAdjacentNeighborsFreeFalling(matrix, depth, lastValidLocation);
+                SetAdjacentNeighborsFreeFalling(matrix, depth, lastValidLocation);
                 if (isFinal) {
                     isFreeFalling = true;
-                    swapPositions(matrix, neighbor, modifiedMatrixX, modifiedMatrixY);
+                    SwapPositions(matrix, neighbor, modifiedMatrixX, modifiedMatrixY);
                 } else {
                     return false;
                 }
             } else if (neighbor is Liquid) {
                 if (depth > 0) {
                     isFreeFalling = true;
-                    setAdjacentNeighborsFreeFalling(matrix, depth, lastValidLocation);
-                    swapPositions(matrix, neighbor, modifiedMatrixX, modifiedMatrixY);
+                    SetAdjacentNeighborsFreeFalling(matrix, depth, lastValidLocation);
+                    SwapPositions(matrix, neighbor, modifiedMatrixX, modifiedMatrixY);
                 } else {
                     isFreeFalling = true;
-                    moveToLastValidAndSwap(matrix, neighbor, modifiedMatrixX, modifiedMatrixY, lastValidLocation);
+                    MoveToLastValidAndSwap(matrix, neighbor, modifiedMatrixX, modifiedMatrixY, lastValidLocation);
                     return true;
                 }
             } else if (neighbor is Solid) {
                 if (depth > 0) return true;
                 if (isFinal) {
-                    moveToLastValid(matrix, lastValidLocation);
+                    MoveToLastValid(matrix, lastValidLocation);
                     return true;
                 }
                 if (isFreeFalling) {
@@ -131,27 +131,27 @@ namespace DotSim
                 Vector3 normalizedVel = vel;
                 normalizedVel.Normalize();
 
-                int additionalX = getAdditional(normalizedVel.X);
-                int additionalY = getAdditional(normalizedVel.Y);
+                int additionalX = GetAdditional(normalizedVel.X);
+                int additionalY = GetAdditional(normalizedVel.Y);
 
-                Element diagonalNeighbor = matrix.get(matrixX + additionalX, matrixY + additionalY);
+                Element diagonalNeighbor = matrix.Get(matrixX + additionalX, matrixY + additionalY);
                 if (isFirst) {
-                    vel.Y = averageVel(vel.Y, neighbor.vel.Y);
+                    vel.Y = AverageVel(vel.Y, neighbor.vel.Y);
                 } else { vel.Y = -124; }
 
                 neighbor.vel.Y = vel.Y;
                 vel.X *= frictionFactor * neighbor.frictionFactor;
                 if (diagonalNeighbor != null) {
-                    bool stoppedDiagonally = actOnNeighboringElement(diagonalNeighbor, matrixX + additionalX, matrixY + additionalY, matrix, true, false, lastValidLocation, depth + 1);
+                    bool stoppedDiagonally = ActOnNeighboringElement(diagonalNeighbor, matrixX + additionalX, matrixY + additionalY, matrix, true, false, lastValidLocation, depth + 1);
                     if (!stoppedDiagonally) {
                         isFreeFalling = true;
                         return true;
                     }
                 }
 
-                Element adjacentNeighbor = matrix.get(matrixX + additionalX, matrixY);
+                Element adjacentNeighbor = matrix.Get(matrixX + additionalX, matrixY);
                 if (adjacentNeighbor != null && adjacentNeighbor != diagonalNeighbor) {
-                    bool stoppedAdjacently = actOnNeighboringElement(adjacentNeighbor, matrixX + additionalX, matrixY, matrix, true, false, lastValidLocation, depth + 1);
+                    bool stoppedAdjacently = ActOnNeighboringElement(adjacentNeighbor, matrixX + additionalX, matrixY, matrix, true, false, lastValidLocation, depth + 1);
                     if (stoppedAdjacently) vel.X *= -1;
                     if (!stoppedAdjacently) {
                         isFreeFalling = false;
@@ -161,41 +161,41 @@ namespace DotSim
 
                 isFreeFalling = false;
 
-                moveToLastValid(matrix, lastValidLocation);
+                MoveToLastValid(matrix, lastValidLocation);
                 return true;
             }
             return false;
         }
 
-        private void stepAsPartOfPhysicsBody(WorldMatrix matrix) { return; }
-        private void setAdjacentNeighborsFreeFalling(WorldMatrix matrix, int depth, Vector3 lastValidLocation) {
+        private void StepAsPartOfPhysicsBody(WorldMatrix matrix) { return; }
+        private void SetAdjacentNeighborsFreeFalling(WorldMatrix matrix, int depth, Vector3 lastValidLocation) {
             if (depth > 0) return;
 
-            Element adjacentNeighbor1 = matrix.get(lastValidLocation.X + 1, lastValidLocation.Y);
+            Element adjacentNeighbor1 = matrix.Get(lastValidLocation.X + 1, lastValidLocation.Y);
             if (adjacentNeighbor1 is Solid) {
-                bool wasSet = setElementFreeFalling(adjacentNeighbor1);
+                bool wasSet = SetElementFreeFalling(adjacentNeighbor1);
                 if (wasSet) {
-                    matrix.reportToChunkActive(adjacentNeighbor1);
+                    matrix.ReportToChunkActive(adjacentNeighbor1);
                 }
             }
 
-            Element adjacentNeighbor2 = matrix.get(lastValidLocation.X - 1, lastValidLocation.Y);
+            Element adjacentNeighbor2 = matrix.Get(lastValidLocation.X - 1, lastValidLocation.Y);
             if (adjacentNeighbor2 is Solid) {
-                bool wasSet = setElementFreeFalling(adjacentNeighbor2);
+                bool wasSet = SetElementFreeFalling(adjacentNeighbor2);
                 if (wasSet) {
-                    matrix.reportToChunkActive(adjacentNeighbor2);
+                    matrix.ReportToChunkActive(adjacentNeighbor2);
                 }
             }
         }
 
-        private bool setElementFreeFalling(Element element) {
+        private bool SetElementFreeFalling(Element element) {
             element.isFreeFalling = rng.NextDouble() > element.inertialResistance || element.isFreeFalling;
             return element.isFreeFalling;
         }
 
 
 
-        private int getAdditional(float val) {
+        private int GetAdditional(float val) {
             if (val < -.1f) {
                 return (int)Math.Floor(val);
             }
@@ -206,7 +206,7 @@ namespace DotSim
             }
         }
 
-        private float averageVel(float vel, float otherVel) {
+        private float AverageVel(float vel, float otherVel) {
             if (otherVel > -125f) {
                 return -124f;
             }

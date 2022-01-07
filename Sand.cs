@@ -16,7 +16,7 @@ namespace DotSim
             elementName = "Sand";
             mass = 150;
         }
-        public override bool actOnOther(Element other, WorldMatrix matrix) { return true; }
-        override public bool receiveHeat(WorldMatrix matrix, int heat) { return false;  }
+        public override bool ActOnOther(Element other, WorldMatrix matrix) { return true; }
+        override public bool ReceiveHeat(WorldMatrix matrix, int heat) { return false;  }
     }
 }

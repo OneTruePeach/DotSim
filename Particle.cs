@@ -37,28 +37,28 @@ namespace DotSim
             if (isIgnited) { flammabilityResistance = 0; }
         }
 
-        override public bool receiveHeat(WorldMatrix matrix, int heat) { return false; }
-        override public void dieAndReplace(WorldMatrix matrix, string element) { particleDeathAndSpawn(matrix); }
+        override public bool ReceiveHeat(WorldMatrix matrix, int heat) { return false; }
+        override public void DieAndReplace(WorldMatrix matrix, string element) { ParticleDeathAndSpawn(matrix); }
 
-        private void particleDeathAndSpawn(WorldMatrix matrix) {
-            Element currentLocation = matrix.get(matrixX, matrixY);
+        private void ParticleDeathAndSpawn(WorldMatrix matrix) {
+            Element currentLocation = matrix.Get(matrixX, matrixY);
             if (currentLocation == this || currentLocation is EmptyCell) {
-                die(matrix);
-                Element newElement = createElementByMatrix(matrixX, matrixY, containedElementName);
+                Die(matrix);
+                Element newElement = CreateElementByMatrix(matrixX, matrixY, containedElementName);
                 newElement.color = color;
                 newElement.isIgnited = isIgnited;
                 if (newElement.isIgnited) { newElement.flammabilityResistance = 0; }
-                matrix.setElementAtIndex(matrixX, matrixY, newElement);
-                matrix.reportToChunkActive(matrixX, matrixY);
+                matrix.SetElementAtIndex(matrixX, matrixY, newElement);
+                matrix.ReportToChunkActive(matrixX, matrixY);
             } else {
                 int yIndex = 0;
                 while (true) {
-                    Element elementAtNewPos = matrix.get(matrixX, matrixY + yIndex);
+                    Element elementAtNewPos = matrix.Get(matrixX, matrixY + yIndex);
                     if (elementAtNewPos == null) break;
                     else if (elementAtNewPos is EmptyCell) {
-                        die(matrix);
-                        matrix.setElementAtIndex(matrixX, matrixY + yIndex, createElementByMatrix(matrixX, matrixY, containedElementName));
-                        matrix.reportToChunkActive(matrixX, matrixY + yIndex);
+                        Die(matrix);
+                        matrix.SetElementAtIndex(matrixX, matrixY + yIndex, CreateElementByMatrix(matrixX, matrixY, containedElementName));
+                        matrix.ReportToChunkActive(matrixX, matrixY + yIndex);
                         break;
                     }
                     yIndex++;
@@ -66,7 +66,7 @@ namespace DotSim
             }
         }
 
-        public override void step(WorldMatrix matrix) {
+        public override void Step(WorldMatrix matrix) {
             if (stepped.Get(0) == true) { return; }
             stepped.Not();
 
@@ -102,32 +102,32 @@ namespace DotSim
 
                 int modifiedMatrixX = matrixX + (yIncrease * yModifier);
                 int modifiedMatrixY = matrixY + (xIncrease * xModifier);
-                if (matrix.isWithinBounds(modifiedMatrixX, modifiedMatrixY)) {
-                    Element neighbor = matrix.get(modifiedMatrixX, modifiedMatrixY);
+                if (matrix.IsWithinBounds(modifiedMatrixX, modifiedMatrixY)) {
+                    Element neighbor = matrix.Get(modifiedMatrixX, modifiedMatrixY);
                     if (neighbor == this) continue;
-                    bool stopped = actOnNeighboringElement(neighbor, modifiedMatrixX, modifiedMatrixY, matrix, i == upperBound, i == 1, lastValidLocation, 0);
+                    bool stopped = ActOnNeighboringElement(neighbor, modifiedMatrixX, modifiedMatrixY, matrix, i == upperBound, i == 1, lastValidLocation, 0);
                     if (stopped) break;
                     lastValidLocation.X = modifiedMatrixX;
                     lastValidLocation.Y = modifiedMatrixY;
                 } else {
-                    matrix.setElementAtIndex(matrixX, matrixY, createElementByMatrix(matrixX, matrixY, "EmptyCell"));
+                    matrix.SetElementAtIndex(matrixX, matrixY, CreateElementByMatrix(matrixX, matrixY, "EmptyCell"));
                     return;
                 }
             }
-            modifyColor();
+            ModifyColor();
         }
 
-        protected override bool actOnNeighboringElement(Element neighbor, int modifiedMatrixX, int modifiedMatrixY, WorldMatrix matrix, bool isFinal, bool isFirst, Vector3 lastValidLocation, int depth) {
+        protected override bool ActOnNeighboringElement(Element neighbor, int modifiedMatrixX, int modifiedMatrixY, WorldMatrix matrix, bool isFinal, bool isFirst, Vector3 lastValidLocation, int depth) {
             if (neighbor is EmptyCell || neighbor is Particle) {
-                if (isFinal) { swapPositions(matrix, neighbor, modifiedMatrixX, modifiedMatrixY); }
+                if (isFinal) { SwapPositions(matrix, neighbor, modifiedMatrixX, modifiedMatrixY); }
                 else { return false; }
             } else if (neighbor is Liquid || neighbor is Solid) {
-                moveToLastValid(matrix, lastValidLocation);
-                dieAndReplace(matrix, containedElementName);
+                MoveToLastValid(matrix, lastValidLocation);
+                DieAndReplace(matrix, containedElementName);
                 return true;
             } else if (neighbor is Gas) {
                 if (isFinal) {
-                    moveToLastValidAndSwap(matrix, neighbor, modifiedMatrixX, modifiedMatrixY, lastValidLocation);
+                    MoveToLastValidAndSwap(matrix, neighbor, modifiedMatrixX, modifiedMatrixY, lastValidLocation);
                     return true;
                 }
                 return false;
@@ -135,6 +135,6 @@ namespace DotSim
             return false;
         }
 
-        public override bool actOnOther(Element other, WorldMatrix matrix) { return false; }
+        public override bool ActOnOther(Element other, WorldMatrix matrix) { return false; }
     }
 }

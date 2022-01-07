@@ -11,8 +11,8 @@ namespace DotSim
             isFreeFalling = false;
         }
 
-        public override void step(WorldMatrix matrix) { base.step(matrix); }
-        protected override bool actOnNeighboringElement(Element neighbor, int modifiedMatrixX, int modifiedMatrixY, WorldMatrix matrix, bool isFinal, bool isFirst, Vector3 lastValidLocation, int depth) { return true; }
-        public override bool actOnOther(Element other, WorldMatrix matrix) { return true; }
+        public override void Step(WorldMatrix matrix) { base.Step(matrix); }
+        protected override bool ActOnNeighboringElement(Element neighbor, int modifiedMatrixX, int modifiedMatrixY, WorldMatrix matrix, bool isFinal, bool isFirst, Vector3 lastValidLocation, int depth) { return true; }
+        public override bool ActOnOther(Element other, WorldMatrix matrix) { return true; }
     }
 }
