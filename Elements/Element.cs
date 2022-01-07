@@ -58,7 +58,6 @@ namespace DotSim
         }
 
         public virtual void CustomElementFunctions(WorldMatrix matrix) { }
-
         public abstract void Step(WorldMatrix matrix);
         public virtual bool ActOnOther(Element other, WorldMatrix matrix) { return false; }
         protected abstract bool ActOnNeighboringElement(Element neighbor, int modifiedMatrixX, int modifiedMatrixY, WorldMatrix matrix, bool isFinal, bool isFirst, Vector3 lastValidLocation, int depth);
