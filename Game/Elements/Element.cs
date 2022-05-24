@@ -30,6 +30,7 @@ namespace DotSim
 
         public int temperature = 0;
         public int flammabilityResistance = 100;
+        public int resetFlammabilityResistance = 50;
         public bool isIgnited;
         public int heatFactor = 10;
         public int coolingFactor = 5;
@@ -157,7 +158,7 @@ namespace DotSim
             }
         }
 
-        public void CheckIfDead(WorldMatrix matrix) {
+        public virtual void CheckIfDead(WorldMatrix matrix) {
             if (health <= 0) { Die(matrix); }
         }
 
@@ -190,7 +191,7 @@ namespace DotSim
             CheckIfDead(matrix);
         }
 
-        public void TakeFireDamage(WorldMatrix matrix) {
+        public virtual void TakeFireDamage(WorldMatrix matrix) {
             health -= fireDamage;
             if (IsSurrounded(matrix)) {
                 flammabilityResistance /= 2;
@@ -239,10 +240,36 @@ namespace DotSim
         /// </summary>
         /// <returns>An instance of the specified element</returns>
         public static Element CreateElementByMatrix(int x, int y, string element) {
-            if (element == "EmptyCell") { return EmptyCell.GetInstance(); }
-            if (element == "Sand") { return new Sand(x, y); }
+            if (element == "EmptyCell") { return EmptyCell.GetInstance(); } //not materials
+            if (element == "Particle") { return null; }
+
+            if (element == "Ground") { return new Ground(x, y); } //immovable solids
             if (element == "Stone") { return new Stone(x, y); }
-            if (element == "Water") { return new Water(x, y); }
+            if (element == "Brick") { return new Brick(x, y); }
+            if (element == "Wood") { return new Wood(x, y); }
+            if (element == "Titanium") { return new Titanium(x, y); }
+            if (element == "Bacteria") { return new Bacteria(x, y); }
+
+            if (element == "Sand") { return new Sand(x, y); } //movable solids
+            if (element == "Dirt") { return new Dirt(x, y); }
+            if (element == "Snow") { return new Snow(x, y); }
+            if (element == "Coal") { return new Coal(x, y); }
+            if (element == "Ember") { return new Ember(x, y); }
+            if (element == "Gunpowder") { return new Gunpowder(x, y); }
+
+            if (element == "Water") { return new Water(x, y); } //liquids
+            if (element == "Oil") { return new  Oil(x, y); }
+            if (element == "Acid") { return new Acid(x, y); }
+            if (element == "Blood") { return new Blood(x, y); }
+            if (element == "Lava") { return new Lava(x, y); }
+            if (element == "Cement") { return new Cement(x, y); }
+
+            if (element == "Smoke") { return new Smoke(x, y); } //gasses
+            if (element == "Steam") { return new Steam(x, y); }
+            if (element == "Spark") { return new Spark(x, y); }
+            if (element == "FlammableGas") { return new FlammableGas(x, y); }
+            if (element == "ExplosionSpark") { return new ExplosionSpark(x, y); }
+
             return null;
         }
 
@@ -353,13 +380,22 @@ namespace DotSim
 
         public virtual bool Infect(WorldMatrix matrix) {
             if (rng.NextDouble() > 0.95f) {
-                DieAndReplace(matrix, "SlimeMold");
+                DieAndReplace(matrix, "Bacteria");
                 return true;
             }
             return false;
         }
 
-        public void ModifyColor() { if (isIgnited) { color = GetColorForThisElement("Fire"); } }
+        public virtual void ModifyColor() { if (isIgnited) { color = GetColorForThisElement("Fire"); } }
+
+        public Color GetRandomFireColor() { //this might look ok? idk
+            List<Color> fireColors = new List<Color>();
+            fireColors.AddRange(new List<Color> {
+                    new Color(255, 069, 000, 255),
+                    new Color(255, 255, 000, 255),
+                    new Color(150, 000, 000, 255)});
+            return fireColors[(int)(rng.NextDouble() * fireColors.Count)];
+        }
 
         public bool CleanColor() {
             if (!discolored || rng.NextDouble() > .2f) return false;
